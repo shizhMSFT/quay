@@ -72,3 +72,11 @@ func (w *Wharf) Arrive() {
 		w.ferryCaptain <- true
 	}
 }
+
+// idle returns true if the wharf is not actively used.
+func (w *Wharf) idle() bool {
+	w.gate.Lock()
+	defer w.gate.Unlock()
+
+	return (w.closed && w.platform == nil) || (!w.closed && w.ferry == nil)
+}
