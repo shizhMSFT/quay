@@ -19,14 +19,15 @@ func ExampleWharf() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if status := <-wharf.Enter(i); status.Elected {
+			wharf.Travel(i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				time.Sleep(100 * time.Millisecond)
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
@@ -37,13 +38,14 @@ func ExampleWharf() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if status := <-wharf.Enter(i); status.Elected {
+			wharf.Travel(i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
@@ -58,7 +60,7 @@ func ExampleWharf() {
 	// [5 6 7 8 9]
 }
 
-func ExampleWharf_Resign() {
+func ExampleWharf_resign() {
 	wharf := quay.NewWharf[int]()
 	var wg sync.WaitGroup
 
@@ -67,19 +69,19 @@ func ExampleWharf_Resign() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if status := <-wharf.Enter(i); status.Elected {
+			wharf.Travel(i, func() error {
 				if i == 0 {
 					time.Sleep(50 * time.Millisecond)
-					wharf.Resign()
-					return
+					return errors.New("resign")
 				}
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				time.Sleep(100 * time.Millisecond)
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 		if i == 0 {
 			time.Sleep(10 * time.Millisecond)
@@ -93,13 +95,14 @@ func ExampleWharf_Resign() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if status := <-wharf.Enter(i); status.Elected {
+			wharf.Travel(i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
@@ -114,7 +117,7 @@ func ExampleWharf_Resign() {
 	// [5 6 7 8 9]
 }
 
-func ExampleWharf_Arrive() {
+func ExampleWharf_arrive() {
 	wharf := quay.NewWharf[int]()
 	var wg sync.WaitGroup
 
@@ -123,21 +126,19 @@ func ExampleWharf_Arrive() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			status := <-wharf.Enter(i)
-			if status.Elected {
+			err := wharf.Travel(i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				time.Sleep(100 * time.Millisecond)
 				if i == 0 {
-					wharf.Arrive(errors.New("abandon ship"))
-					return
+					return errors.New("abandon ship")
 				}
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			} else {
-				fmt.Println(status.Error)
-			}
+				return nil
+			})
+			fmt.Println(err)
 		}(i)
 		if i == 0 {
 			time.Sleep(10 * time.Millisecond)
@@ -151,13 +152,14 @@ func ExampleWharf_Arrive() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if status := <-wharf.Enter(i); status.Elected {
+			wharf.Travel(i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				slices.Sort(tickets)
 				fmt.Println(tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
@@ -168,6 +170,7 @@ func ExampleWharf_Arrive() {
 	// Checkpoint 1
 	// Checkpoint 2
 	// Checkpoint 3
+	// abandon ship
 	// abandon ship
 	// abandon ship
 	// abandon ship
@@ -184,14 +187,14 @@ func ExampleQuay() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if wharf, status, dispose := quay.Enter("#1", i); (<-status).Elected {
-				defer dispose()
+			quay.Travel("#1", i, func() error {
 				time.Sleep(100 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				slices.Sort(tickets)
 				fmt.Println("#1", tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
@@ -200,14 +203,14 @@ func ExampleQuay() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if wharf, status, dispose := quay.Enter("#2", i); (<-status).Elected {
-				defer dispose()
+			quay.Travel("#2", i, func() error {
 				time.Sleep(50 * time.Millisecond)
-				tickets := wharf.Close()
+				return nil
+			}, func(tickets []int) error {
 				slices.Sort(tickets)
 				fmt.Println("#2", tickets)
-				wharf.Arrive(nil)
-			}
+				return nil
+			})
 		}(i)
 	}
 
