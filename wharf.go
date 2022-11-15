@@ -1,9 +1,6 @@
 package quay
 
-import (
-	"errors"
-	"sync"
-)
+import "sync"
 
 // sailStatus represents if a gopher is elected as captain or not, and if the
 // gopher arrives in one piece.
@@ -27,8 +24,8 @@ func NewWharf[T any]() *Wharf[T] {
 	return &Wharf[T]{}
 }
 
-// Travel travels to the destination. If necessary, one gopher needs to lear how
-// to sail.
+// Travel travels to the destination. If necessary, one gopher needs to learn
+// how to sail.
 func (w *Wharf[T]) Travel(ticket T, learn func() error, sail func(tickets []T) error) error {
 	status := <-w.enter(ticket)
 	if status.Elected {
@@ -77,11 +74,6 @@ func (w *Wharf[T]) enter(ticket T) <-chan sailStatus {
 func (w *Wharf[T]) resign() {
 	w.gate.Lock()
 	defer w.gate.Unlock()
-
-	if w.closed {
-		w.complete(errors.New("ferry sinks: captain resign"))
-		return
-	}
 
 	if len(w.ferry) > 1 {
 		w.ferry = w.ferry[1:]
