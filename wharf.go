@@ -108,10 +108,6 @@ func (w *Wharf[T]) arrive(err error) {
 	w.gate.Lock()
 	defer w.gate.Unlock()
 
-	w.complete(err)
-}
-
-func (w *Wharf[T]) complete(err error) {
 	w.closed = false
 	remaining := len(w.ferry) - 1
 	status := w.ferryStatus
